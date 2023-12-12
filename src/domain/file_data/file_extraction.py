@@ -4,17 +4,17 @@ import logging
 
 from pyspark import Row
 
+from common.settings import WorkerSettings
 from domain.file_data.exception.pe_file import ExtractingFileError
 from domain.file_data.handler.pe_file import PeFileHandler
 from presistence.service.s3 import S3FileService
-from worker_extract.settings import CrawlWorkerSettings
 
 
 logger = logging.getLogger(__name__)
 
 
 async def download_and_extract_file_data(file_row: Row) -> Row:
-    settings = CrawlWorkerSettings()
+    settings = WorkerSettings()
     s3_file_service = S3FileService(bucket_name=settings.AWS_BUCKET_NAME)
     pe_file_handler = PeFileHandler()
     file_obj = await s3_file_service.get_streaming_body_by_key(file_key=file_row.name)

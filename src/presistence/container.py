@@ -1,14 +1,14 @@
 from functools import cached_property
 
 from common.pgsql import PSQLDatabase
+from common.settings import WorkerSettings
 from presistence.repository.file import PgSqlFileRepository
 from presistence.service.s3 import S3FileService
-from worker_sync.settings import SyncWorkerSettings
 
 
 class PersistentLayerContainer:
     database: PSQLDatabase
-    settings: SyncWorkerSettings
+    settings: WorkerSettings
 
     @cached_property
     def storage_service(self) -> S3FileService:

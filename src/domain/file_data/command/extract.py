@@ -28,6 +28,7 @@ class ExtractCommand:
         psql_settings: PgsqlSettings,
         source_table: str,
         target_table: str,
+        spark_url: str,
     ):
         self._file_repository = file_repository
         self._storage_service = storage_service
@@ -36,6 +37,7 @@ class ExtractCommand:
             f"jdbc:postgresql://{self._psql_settings.host}:"
             f"{self._psql_settings.port}/{self._psql_settings.database}"
         )
+        self._spark_url = spark_url
         self._source_table = source_table
         self._target_table = target_table
         self._schema = StructType(
@@ -92,7 +94,7 @@ class ExtractCommand:
     def _create_spark_session(self) -> SparkSession:
         return (
             SparkSession.builder.appName("BinaryFileProcessor")
-            .master("spark://spark-master:7077")
+            .master(self._spark_url)
             .getOrCreate()
         )
 
@@ -181,11 +183,12 @@ class ExtractCommand:
             extracted_data.filter(lambda x: x is not None), self._schema
         )
         extracted_data_df = extracted_data_df.alias("a")
+        unprocessed_files_df = unprocessed_files_df.alias("b")
 
         final_metadata_df = unprocessed_files_df.join(
             extracted_data_df, "hash", "left"
         ).select(
-            col("a.name"),
+            col("b.name"),
             col("a.hash"),
             col("a.size"),
             col("a.architecture"),

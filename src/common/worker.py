@@ -3,11 +3,11 @@ import asyncio
 import logging
 from typing import Optional
 
-from pydantic_settings import BaseSettings
+from common.settings import WorkerSettings
 
 
 class Worker:
-    def __init__(self, settings: BaseSettings):
+    def __init__(self, settings: WorkerSettings):
         self.settings = settings
 
     async def run(self) -> None:
@@ -17,7 +17,7 @@ class Worker:
 class Bootstrap:
     tasks: Optional[dict[str, type[Worker]]]
 
-    def __init__(self, tasks: dict[str, type[Worker]], settings: BaseSettings):
+    def __init__(self, tasks: dict[str, type[Worker]], settings: WorkerSettings):
         self.settings = settings
         self.parser = argparse.ArgumentParser()
 

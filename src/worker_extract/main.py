@@ -3,9 +3,9 @@ import logging
 import signal
 from typing import Any
 
+from common.settings import WorkerSettings
 from common.worker import Worker
 from worker_extract.container import WorkerExtractContainer
-from worker_extract.settings import CrawlWorkerSettings
 
 
 logging.basicConfig(level=logging.INFO)
@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class WorkerExtract(Worker):
-    def __init__(self, settings: CrawlWorkerSettings):
+    def __init__(self, settings: WorkerSettings):
         super().__init__(settings)
         self.terminated = False
         self.interrupted = False
@@ -49,7 +49,7 @@ class WorkerExtract(Worker):
 
 
 def main() -> None:
-    settings = CrawlWorkerSettings()
+    settings = WorkerSettings()
     WorkerExtract(settings).run()
 
 

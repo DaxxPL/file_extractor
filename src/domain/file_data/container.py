@@ -1,6 +1,7 @@
 from functools import cached_property
 
 from common.pgsql import PgsqlSettings
+from common.settings import WorkerSettings
 from domain.file_data.command.extract import ExtractCommand
 from domain.file_data.command.sync import SyncCommand
 from domain.file_data.repository.interface import FileRepositoryInterface
@@ -11,6 +12,7 @@ class FileDataContainer:
     storage_service: StorageServiceInterface
     file_repository: FileRepositoryInterface
     pgsql_settings: PgsqlSettings
+    settings: WorkerSettings
 
     @cached_property
     def sync_command(self) -> SyncCommand:
@@ -26,4 +28,5 @@ class FileDataContainer:
             psql_settings=self.pgsql_settings,
             source_table="storage_file_metadata",
             target_table="extracted_file_metadata",
+            spark_url=self.settings.SPARK_MASTER_URL,
         )

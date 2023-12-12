@@ -1,13 +1,13 @@
 from functools import cached_property
 
 from common.pgsql import PgsqlSettings, PSQLDatabase
+from common.settings import WorkerSettings
 from domain.file_data.container import FileDataContainer
 from presistence.container import PersistentLayerContainer
-from worker_sync.settings import SyncWorkerSettings
 
 
 class SyncWorkerContainer(PersistentLayerContainer, FileDataContainer):
-    def __init__(self, settings: SyncWorkerSettings):
+    def __init__(self, settings: WorkerSettings):
         self.settings = settings
 
     @cached_property

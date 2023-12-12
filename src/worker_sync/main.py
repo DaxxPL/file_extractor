@@ -3,9 +3,9 @@ import logging
 import signal
 from typing import Any
 
+from common.settings import WorkerSettings
 from common.worker import Bootstrap, Worker
 from worker_sync.container import SyncWorkerContainer
-from worker_sync.settings import SyncWorkerSettings
 
 
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 class SyncWorker(Worker):
-    MICROSECONDS = 1_000_000
-
-    def __init__(self, settings: SyncWorkerSettings):
+    def __init__(self, settings: WorkerSettings):
         super().__init__(settings)
         self.terminated = False
         self.interrupted = False
@@ -45,7 +43,7 @@ class SyncWorker(Worker):
 
 
 def main() -> None:
-    settings = SyncWorkerSettings()
+    settings = WorkerSettings()
     Bootstrap({"sync": SyncWorker}, settings).run()
 
 
