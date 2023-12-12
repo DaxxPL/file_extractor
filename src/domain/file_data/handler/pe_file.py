@@ -3,6 +3,7 @@ import logging
 from concurrent.futures import ThreadPoolExecutor
 
 import pefile
+from botocore.exceptions import BotoCoreError
 from botocore.response import StreamingBody
 
 from domain.file_data.exception.pe_file import ExtractingFileError
@@ -13,8 +14,10 @@ logger = logging.getLogger(__name__)
 
 
 class PeFileHandler:
+    __slots__ = ("_pool",)
+
     def __init__(self) -> None:
-        self.pool = ThreadPoolExecutor()
+        self._pool = ThreadPoolExecutor()
 
     async def execute(self, file_data: StreamingBody) -> PeFileData:
         try:
@@ -28,7 +31,13 @@ class PeFileHandler:
                     pefile.DIRECTORY_ENTRY["IMAGE_DIRECTORY_ENTRY_EXPORT"],
                 ]
             )
-        except pefile.PEFormatError as error:
+        except (
+            pefile.PEFormatError,
+            BotoCoreError,
+            IOError,
+            asyncio.CancelledError,
+        ) as error:
+            logger.exception(error, exc_info=True)
             raise ExtractingFileError(
                 f"Error: The file is not a valid PE file or is corrupted. {error}"
             )

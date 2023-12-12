@@ -5,7 +5,7 @@ from common.pgsql import PSQLDatabase
 from domain.file_data.model.file_sync_info import NotExtractedFile
 from domain.file_data.repository.interface import FileRepositoryInterface
 from presistence.repository.mapper.fields.file import FileRepositoryFields
-from presistence.repository.mapper.file import FileSQLMapper
+from presistence.repository.mapper.file import StorageFileSQLMapper
 
 
 logger = logging.getLogger(__name__)
@@ -25,7 +25,8 @@ class PgSqlFileRepository(FileRepositoryInterface):
     ) -> None:
         _ = FileRepositoryFields
         mapped_files = [
-            FileSQLMapper.map_to(file=file, sync_time=sync_time) for file in files
+            StorageFileSQLMapper.map_to(file=file, sync_time=sync_time)
+            for file in files
         ]
 
         async with self._psql_database.pool.acquire() as connection:

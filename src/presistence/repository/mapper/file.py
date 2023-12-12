@@ -4,7 +4,7 @@ from domain.file_data.model.file_sync_info import NotExtractedFile
 from presistence.repository.mapper.fields.file import FileRepositoryFields
 
 
-class FileSQLMapper:
+class StorageFileSQLMapper:
     class Fields(FileRepositoryFields):
         pass
 

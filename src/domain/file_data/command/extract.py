@@ -15,6 +15,7 @@ from common.pgsql import PgsqlSettings
 from domain.file_data.file_extraction import download_and_extract_multiple_file_data
 from domain.file_data.repository.interface import FileRepositoryInterface
 from domain.file_data.service.file_storage_service import StorageServiceInterface
+from presistence.repository.mapper.fields.file import FileRepositoryFields
 
 
 logger = logging.getLogger(__name__)
@@ -29,6 +30,7 @@ class ExtractCommand:
         source_table: str,
         target_table: str,
         spark_url: str,
+        db_table_fields: type[FileRepositoryFields],
     ):
         self._file_repository = file_repository
         self._storage_service = storage_service
@@ -53,6 +55,7 @@ class ExtractCommand:
                 StructField("created_at", TimestampType(), False),
             ]
         )
+        self._db_table_fields = db_table_fields
 
     def execute(self, malicious: bool, num_files: int) -> None:
         spark = self._create_spark_session()
@@ -67,7 +70,7 @@ class ExtractCommand:
             num_files=num_files,
         )
 
-        matching_rows_df = self._get_unique_rows_with_matching_hashes(
+        matching_rows_df = self._get_unique_extracted_rows_with_matching_hashes(
             unprocessed_files_df=unprocessed_files_df, extracted_df=extracted_df
         )
 
@@ -108,55 +111,63 @@ class ExtractCommand:
             .load()
         )
 
-    @staticmethod
     def _extract_unprocessed_files(
-        storage_df: DataFrame, extracted_df: DataFrame, malicious: bool, num_files: int
+        self,
+        storage_df: DataFrame,
+        extracted_df: DataFrame,
+        malicious: bool,
+        num_files: int,
     ) -> DataFrame:
-        storage_filtered_df = storage_df.filter(col("malicious") == malicious)
+        _ = self._db_table_fields
+        storage_filtered_df = storage_df.filter(col(_.MALICIOUS) == malicious)
 
         df_result = storage_filtered_df.join(
             extracted_df,
-            (storage_df["name"] == extracted_df["name"])
-            & (storage_df["hash"] == extracted_df["hash"]),
+            (storage_df[_.NAME] == extracted_df[_.NAME])
+            & (storage_df[_.HASH] == extracted_df[_.HASH]),
             "left_anti",
         )
 
         first_files_df = df_result.limit(num_files)
         return first_files_df
 
-    def _get_unique_rows_with_matching_hashes(
+    def _get_unique_extracted_rows_with_matching_hashes(
         self, unprocessed_files_df: DataFrame, extracted_df: DataFrame
     ) -> DataFrame:
-        unprocessed_distinct_hashes_df = unprocessed_files_df.select("hash").distinct()
+        _ = self._db_table_fields
+
+        unprocessed_distinct_hashes_df = unprocessed_files_df.select(_.HASH).distinct()
         unprocessed_distinct_hashes_list = [
-            row["hash"] for row in unprocessed_distinct_hashes_df.collect()
+            row[_.HASH] for row in unprocessed_distinct_hashes_df.collect()
         ]
         unique_extracted_rows_df = extracted_df.filter(
-            extracted_df["hash"].isin(unprocessed_distinct_hashes_list)
-        ).dropDuplicates(["hash"])
+            extracted_df[_.HASH].isin(unprocessed_distinct_hashes_list)
+        ).dropDuplicates([_.HASH])
 
         return unique_extracted_rows_df
 
     def _join_unprocessed_and_matched_data(
         self, unprocessed_files_df: DataFrame, matching_rows_df: DataFrame
     ) -> DataFrame:
+        _ = self._db_table_fields
+
         unprocessed_files_df_alias = unprocessed_files_df.alias("a")
         matching_rows_df_alias = matching_rows_df.alias("b")
 
         return unprocessed_files_df_alias.join(
             matching_rows_df_alias,
-            col("a.hash") == col("b.hash"),
+            col(f"a.{_.HASH}") == col(f"b.{_.HASH}"),
             "inner",
         ).select(
-            col("a.name"),
-            col("b.hash"),
-            col("b.size"),
-            col("b.architecture"),
-            col("b.num_imports"),
-            col("b.num_exports"),
-            col("b.status"),
-            col("b.malicious"),
-            current_timestamp().alias("created_at"),
+            col(f"a.{_.NAME}"),
+            col(f"b.{_.HASH}"),
+            col(f"b.{_.SIZE}"),
+            col(f"b.{_.ARCHITECTURE}"),
+            col(f"b.{_.NUM_IMPORTS}"),
+            col(f"b.{_.NUM_EXPORTS}"),
+            col(f"b.{_.STATUS}"),
+            col(f"b.{_.MALICIOUS}"),
+            current_timestamp().alias(_.CREATED_AT),
         )
 
     def _get_unprocessed_files(
@@ -164,16 +175,20 @@ class ExtractCommand:
         unprocessed_files_df: DataFrame,
         unprocessed_files_matching_rows_df: DataFrame,
     ) -> DataFrame:
+        _ = self._db_table_fields
+
         return unprocessed_files_df.join(
             unprocessed_files_matching_rows_df,
-            ["hash"],
+            [_.HASH],
             "left_anti",
         )
 
     def _process_distinct_files_and_update_metadata(
         self, unprocessed_files_df: DataFrame, spark: SparkSession
     ) -> DataFrame:
-        distinct_files_df = unprocessed_files_df.dropDuplicates(["hash"])
+        _ = self._db_table_fields
+
+        distinct_files_df = unprocessed_files_df.dropDuplicates([_.HASH])
         distinct_files_rdd = distinct_files_df.rdd
 
         extracted_data = distinct_files_rdd.mapPartitions(
@@ -186,17 +201,17 @@ class ExtractCommand:
         unprocessed_files_df = unprocessed_files_df.alias("b")
 
         final_metadata_df = unprocessed_files_df.join(
-            extracted_data_df, "hash", "left"
+            extracted_data_df, _.HASH, "left"
         ).select(
-            col("b.name"),
-            col("a.hash"),
-            col("a.size"),
-            col("a.architecture"),
-            col("a.num_imports"),
-            col("a.num_exports"),
-            col("a.status"),
-            col("a.malicious"),
-            current_timestamp().alias("created_at"),
+            col(f"b.{_.NAME}"),
+            col(f"a.{_.HASH}"),
+            col(f"a.{_.SIZE}"),
+            col(f"a.{_.ARCHITECTURE}"),
+            col(f"a.{_.NUM_IMPORTS}"),
+            col(f"a.{_.NUM_EXPORTS}"),
+            col(f"a.{_.STATUS}"),
+            col(f"a.{_.MALICIOUS}"),
+            current_timestamp().alias(_.CREATED_AT),
         )
         return final_metadata_df
 

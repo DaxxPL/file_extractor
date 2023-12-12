@@ -24,7 +24,7 @@ elif [ "$1" = 'fmt' ]; then
     exit 0
 elif [ "$1" = 'test' ]; then
     shift
-    exec pytest --cov
+    exec pytest
 elif [ "$1" = 'init-db' ]; then
     shift
     exec yoyo apply --database=postgresql://$PGSQL_USER:$PGSQL_PASSWORD@$PGSQL_SERVER:$PGSQL_PORT/$PGSQL_DATABASE migrations

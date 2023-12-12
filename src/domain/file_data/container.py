@@ -6,6 +6,7 @@ from domain.file_data.command.extract import ExtractCommand
 from domain.file_data.command.sync import SyncCommand
 from domain.file_data.repository.interface import FileRepositoryInterface
 from domain.file_data.service.file_storage_service import StorageServiceInterface
+from presistence.repository.mapper.fields.file import FileRepositoryFields
 
 
 class FileDataContainer:
@@ -29,4 +30,5 @@ class FileDataContainer:
             source_table="storage_file_metadata",
             target_table="extracted_file_metadata",
             spark_url=self.settings.SPARK_MASTER_URL,
+            db_table_fields=FileRepositoryFields,
         )
