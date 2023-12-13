@@ -17,5 +17,5 @@ class StorageFileSQLMapper:
             _.HASH: file.hash,
             _.SIZE: file.size,
             _.MALICIOUS: file.malicious,
-            _.SYNC_TIME: sync_time.replace(tzinfo=None),
+            _.SYNC_TIME: sync_time,
         }

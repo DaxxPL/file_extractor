@@ -21,7 +21,7 @@ steps = [
                 status TEXT NOT NULL,
                 malicious BOOLEAN NOT NULL,
                 type TEXT,
-                created_at TIMESTAMP NOT NULL
+                created_at TIMESTAMP WITH TIME ZONE NOT NULL
             );
         CREATE UNIQUE INDEX extracted_idx_name_hash ON
         extracted_file_metadata (name, hash);

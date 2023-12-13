@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import logging
+from typing import Iterator
 
 from pyspark import Row
 
@@ -64,7 +65,7 @@ class FileProcessor:
         return asyncio.run(self._process_files_async(file_rows))
 
 
-def process_partition(partition):
+def process_partition(partition: Iterator[Row]) -> list[Row]:
     settings = WorkerSettings()
     processor = FileProcessor(
         s3_file_service=S3FileService(bucket_name=settings.AWS_BUCKET_NAME),

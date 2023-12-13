@@ -9,7 +9,7 @@ CREATE TABLE storage_file_metadata (
     hash TEXT NOT NULL,
     size INT NOT NULL,
     malicious BOOLEAN NOT NULL,
-    sync_time TIMESTAMP NOT NULL
+    sync_time TIMESTAMP WITH TIME ZONE NOT NULL
 );
 
 CREATE UNIQUE INDEX idx_name_hash ON storage_file_metadata (name, hash);

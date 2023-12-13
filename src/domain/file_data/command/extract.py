@@ -42,21 +42,22 @@ class ExtractCommand:
         self._spark_url = spark_url
         self._source_table = source_table
         self._target_table = target_table
+        self._db_table_fields = db_table_fields
+
         self._schema = StructType(
             [
-                StructField("name", StringType(), False),
-                StructField("hash", StringType(), False),
-                StructField("size", IntegerType(), False),
-                StructField("architecture", StringType(), True),
-                StructField("num_imports", IntegerType(), True),
-                StructField("num_exports", IntegerType(), True),
-                StructField("type", StringType(), True),
-                StructField("status", StringType(), False),
-                StructField("malicious", BooleanType(), False),
-                StructField("created_at", TimestampType(), False),
+                StructField(db_table_fields.NAME, StringType(), False),
+                StructField(db_table_fields.HASH, StringType(), False),
+                StructField(db_table_fields.SIZE, IntegerType(), False),
+                StructField(db_table_fields.ARCHITECTURE, StringType(), True),
+                StructField(db_table_fields.NUM_IMPORTS, IntegerType(), True),
+                StructField(db_table_fields.NUM_EXPORTS, IntegerType(), True),
+                StructField(db_table_fields.TYPE, StringType(), True),
+                StructField(db_table_fields.STATUS, StringType(), False),
+                StructField(db_table_fields.MALICIOUS, BooleanType(), False),
+                StructField(db_table_fields.CREATED_AT, TimestampType(), False),
             ]
         )
-        self._db_table_fields = db_table_fields
 
     def execute(self, malicious: bool, num_files: int) -> None:
         spark = self._create_spark_session()
@@ -84,10 +85,6 @@ class ExtractCommand:
             unprocessed_files_df=unprocessed_files_df,
             unprocessed_files_matching_rows_df=unprocessed_files_matching_rows_df,
         )
-
-        if unprocessed_files_df.count() == 0:
-            logger.info("No files to extract")
-            return
 
         processed_files_df = self._process_distinct_files_and_update_metadata(
             unprocessed_files_df=unprocessed_files_df, spark=spark
