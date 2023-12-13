@@ -11,4 +11,5 @@ class FileRepositoryFields:
     NUM_IMPORTS = "num_imports"
     NUM_EXPORTS = "num_exports"
     STATUS = "status"
+    TYPE = "type"
     CREATED_AT = "created_at"

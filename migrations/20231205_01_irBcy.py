@@ -20,6 +20,7 @@ steps = [
                 num_exports INT,
                 status TEXT NOT NULL,
                 malicious BOOLEAN NOT NULL,
+                type TEXT,
                 created_at TIMESTAMP NOT NULL
             );
         CREATE UNIQUE INDEX extracted_idx_name_hash ON

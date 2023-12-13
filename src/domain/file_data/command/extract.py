@@ -12,7 +12,7 @@ from pyspark.sql.types import (
 )
 
 from common.pgsql import PgsqlSettings
-from domain.file_data.file_extraction import download_and_extract_multiple_file_data
+from domain.file_data.file_processor import process_partition
 from domain.file_data.repository.interface import FileRepositoryInterface
 from domain.file_data.service.file_storage_service import StorageServiceInterface
 from presistence.repository.mapper.fields.file import FileRepositoryFields
@@ -50,6 +50,7 @@ class ExtractCommand:
                 StructField("architecture", StringType(), True),
                 StructField("num_imports", IntegerType(), True),
                 StructField("num_exports", IntegerType(), True),
+                StructField("type", StringType(), True),
                 StructField("status", StringType(), False),
                 StructField("malicious", BooleanType(), False),
                 StructField("created_at", TimestampType(), False),
@@ -173,6 +174,7 @@ class ExtractCommand:
             col(f"b.{_.NUM_EXPORTS}"),
             col(f"b.{_.STATUS}"),
             col(f"b.{_.MALICIOUS}"),
+            col(f"b.{_.TYPE}"),
             current_timestamp().alias(_.CREATED_AT),
         )
 
@@ -197,9 +199,8 @@ class ExtractCommand:
         distinct_files_df = unprocessed_files_df.dropDuplicates([_.HASH])
         distinct_files_rdd = distinct_files_df.rdd
 
-        extracted_data = distinct_files_rdd.mapPartitions(
-            download_and_extract_multiple_file_data
-        )
+        extracted_data = distinct_files_rdd.mapPartitions(process_partition)
+
         extracted_data_df = spark.createDataFrame(
             extracted_data.filter(lambda x: x is not None), self._schema
         )
@@ -215,6 +216,7 @@ class ExtractCommand:
             col(f"a.{_.ARCHITECTURE}"),
             col(f"a.{_.NUM_IMPORTS}"),
             col(f"a.{_.NUM_EXPORTS}"),
+            col(f"a.{_.TYPE}"),
             col(f"a.{_.STATUS}"),
             col(f"a.{_.MALICIOUS}"),
             current_timestamp().alias(_.CREATED_AT),
