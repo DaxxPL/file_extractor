@@ -136,13 +136,17 @@ class ExtractCommand:
     ) -> DataFrame:
         _ = self._db_table_fields
 
-        unprocessed_distinct_hashes_df = unprocessed_files_df.select(_.HASH).distinct()
-        unprocessed_distinct_hashes_list = [
-            row[_.HASH] for row in unprocessed_distinct_hashes_df.collect()
-        ]
-        unique_extracted_rows_df = extracted_df.filter(
-            extracted_df[_.HASH].isin(unprocessed_distinct_hashes_list)
-        ).dropDuplicates([_.HASH])
+        unprocessed_distinct_hashes_df = (
+            unprocessed_files_df.select(_.HASH).distinct().alias("a")
+        )
+
+        extracted_df_alias = extracted_df.alias("b")
+
+        unique_extracted_rows_df = extracted_df_alias.join(
+            unprocessed_distinct_hashes_df, col(f"a.{_.HASH}") == col(f"b.{_.HASH}")
+        )
+
+        unique_extracted_rows_df = unique_extracted_rows_df.drop(col(f"a.{_.HASH}"))
 
         return unique_extracted_rows_df
 
@@ -154,11 +158,13 @@ class ExtractCommand:
         unprocessed_files_df_alias = unprocessed_files_df.alias("a")
         matching_rows_df_alias = matching_rows_df.alias("b")
 
-        return unprocessed_files_df_alias.join(
+        joined_df = unprocessed_files_df_alias.join(
             matching_rows_df_alias,
             col(f"a.{_.HASH}") == col(f"b.{_.HASH}"),
             "inner",
-        ).select(
+        )
+
+        return joined_df.select(
             col(f"a.{_.NAME}"),
             col(f"b.{_.HASH}"),
             col(f"b.{_.SIZE}"),
