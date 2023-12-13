@@ -1,0 +1,87 @@
+version: "3.9"
+
+x-base: &base
+  image: base
+  build:
+    context: .
+    dockerfile: ./docker/app/Dockerfile
+  volumes:
+    - .:/app
+  depends_on:
+    - db
+    - spark-master
+    - spark-worker
+  networks:
+    - main-net
+
+services:
+
+  worker_sync:
+    <<: *base
+    env_file: .env
+    command: worker_sync
+
+  worker_extract:
+    <<: *base
+    env_file: .env
+    command: worker_extract
+
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: metadata
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - main-net
+
+
+  spark-master:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+    ports:
+      - '8080:8080'
+      - '7077:7077'
+
+    networks:
+      - main-net
+
+
+  spark-worker:
+    build:
+      context: .
+      dockerfile: docker/spark/Dockerfile
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=1G
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+      - SPARK_USER=spark
+    env_file: .env
+    ports:
+      - '8081:8081'
+    networks:
+      - main-net
+
+volumes:
+  db-data:
+
+networks:
+  main-net:
+    driver: bridge
