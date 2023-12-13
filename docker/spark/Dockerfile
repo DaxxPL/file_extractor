@@ -26,7 +26,6 @@ ENV PYTHONUNBUFFERED=1 \
 
 ENV PATH="$POETRY_HOME/bin:$VENV_PATH/bin:$PATH"
 
-# Install necessary utilities
 USER root
 RUN apt-get update && apt-get install -y \
     curl \
@@ -43,12 +42,9 @@ RUN apt-get update && apt-get install -y  \
 
 WORKDIR $PYSETUP_PATH
 
-# install poetry - respects $POETRY_VERSION & $POETRY_HOME
 RUN curl -sSL https://install.python-poetry.org | python3 -
-# copy project requirement files here to ensure they will be cached.
 COPY poetry.lock* pyproject.toml ./
 
-# install runtime deps - uses $POETRY_VIRTUALENVS_IN_PROJECT internally
 ARG DEBUG=false
 RUN poetry install $(test ! $DEBUG && echo "--no-dev")
 
@@ -56,6 +52,5 @@ FROM spark_base as final
 
 RUN curl https://jdbc.postgresql.org/download/postgresql-42.2.18.jar -o /opt/bitnami/spark/jars/postgresql-42.2.18.jar
 
-# copy in our built poetry + venv
 COPY --from=builder $PYSETUP_PATH $PYSETUP_PATH
 COPY ../.. /app

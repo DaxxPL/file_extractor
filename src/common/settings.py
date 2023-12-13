@@ -8,10 +8,8 @@ class WorkerSettings(BaseSettings):
     PGSQL_DATABASE: str
     PGSQL_PORT: int
 
-    RESYNC_INTERVAL: int = 3600
-
-    MAX_WORKERS: int = 10
-
     AWS_BUCKET_NAME: str
 
     SPARK_MASTER_URL: str
+
+    NUM_FILES: int = 1000

@@ -4,7 +4,7 @@ import signal
 from typing import Any
 
 from common.settings import WorkerSettings
-from common.worker import Worker
+from common.worker import Bootstrap, Worker
 from worker_extract.container import WorkerExtractContainer
 
 
@@ -18,13 +18,14 @@ class WorkerExtract(Worker):
         self.terminated = False
         self.interrupted = False
         self.container = WorkerExtractContainer(self.settings)
-        self.period_time = settings.RESYNC_INTERVAL
+        self.num_files = settings.NUM_FILES
 
-    def run(self) -> None:
+    async def run(self) -> None:
         signal.signal(signal.SIGTERM, self.signal_term)
         signal.signal(signal.SIGINT, self.signal_int)
 
-        num_files = 1_000
+        num_files = self.num_files
+        logger.info(f"Extracting Number of files: {num_files}")
         try:
             start_time = datetime.datetime.now()
             self.container.extract_command.execute(
@@ -50,7 +51,7 @@ class WorkerExtract(Worker):
 
 def main() -> None:
     settings = WorkerSettings()
-    WorkerExtract(settings).run()
+    Bootstrap({"extract": WorkerExtract}, settings).run()
 
 
 if __name__ == "__main__":

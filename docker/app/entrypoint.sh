@@ -6,6 +6,7 @@ if [ "$1" = 'worker_sync' ]; then
   exec python -u src/worker_sync/main.py $@
 elif [ "$1" = 'worker_extract' ]; then
   shift
+  eval python src/wait_spark.py
   exec python -u src/worker_extract/main.py $@
 elif [ "$1" = 'lint' ]; then
     shift

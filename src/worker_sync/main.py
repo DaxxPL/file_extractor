@@ -18,7 +18,6 @@ class SyncWorker(Worker):
         self.terminated = False
         self.interrupted = False
         self.container = SyncWorkerContainer(self.settings)
-        self.period_time = settings.RESYNC_INTERVAL
 
     async def run(self) -> None:
         signal.signal(signal.SIGTERM, self.signal_term)

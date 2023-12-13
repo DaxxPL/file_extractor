@@ -1,6 +1,4 @@
 from datetime import datetime, timezone
-
-# import mocks from pytest
 from unittest.mock import Mock, patch
 
 import pytest
