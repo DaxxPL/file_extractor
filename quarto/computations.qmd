@@ -1,0 +1,69 @@
+---
+title: Quarto Computations
+format:
+    html:
+        code-fold: true
+        code-tools: true
+jupyter: python3
+---
+
+## Numpy
+
+```{python}
+#| echo: true
+import numpy as np
+a = np.arange(15).reshape(3, 5)
+a
+```
+
+## Matplotlib
+
+```{python}
+#| label: fig-limits
+#| fig-cap: "Errorbar limit selector"
+
+import matplotlib.pyplot as plt
+
+fig = plt.figure()
+fig.set_size_inches(12, 7)
+x = np.arange(10)
+y = 2.5 * np.sin(x / 20 * np.pi)
+yerr = np.linspace(0.05, 0.2, 10)
+
+plt.errorbar(x, y + 3, yerr=yerr, label='both limits (default)')
+plt.errorbar(x, y + 2, yerr=yerr, uplims=True, label='uplims=True')
+plt.errorbar(x, y + 1, yerr=yerr, uplims=True, lolims=True, label='uplims=True, lolims=True')
+
+upperlimits = [True, False] * 5
+lowerlimits = [False, True] * 5
+plt.errorbar(x, y, yerr=yerr, uplims=upperlimits, lolims=lowerlimits, label='subsets of uplims and lolims')
+plt.legend(loc='lower right')
+plt.show(fig)
+```
+
+## Plotly
+
+```{python}
+#| label: fig-gapminder
+#| fig-cap: "Life Expectancy and GDP"
+#| fig-subcap:
+#|   - "Gapminder: 1957"
+#|   - "Gapminder: 2007"
+#| layout-ncol: 2
+#| column: page
+
+import plotly.express as px
+import plotly.io as pio
+gapminder = px.data.gapminder()
+def gapminder_plot(year):
+    gapminderYear = gapminder.query("year == " + 
+                                    str(year))
+    fig = px.scatter(gapminderYear, 
+                     x="gdpPercap", y="lifeExp",
+                     size="pop", size_max=60,
+                     hover_name="country")
+    fig.show()
+    
+gapminder_plot(1957)
+gapminder_plot(2007)
+```
